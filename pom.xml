@@ -15,6 +15,15 @@
         <java.version>21</java.version>
     </properties>
 
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.apache.mina/mina-core -->
+        <dependency>
+            <groupId>org.apache.mina</groupId>
+            <artifactId>mina-core</artifactId>
+            <version>2.2.3</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -30,7 +39,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <!-- This is the main class of your program which will be executed-->
-                            <mainClass>Main</mainClass>
+                            <mainClass>com.amoalla.redis.Main</mainClass>
                         </manifest>
                     </archive>
                     <outputDirectory>${dir}</outputDirectory>
