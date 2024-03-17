@@ -1,10 +1,10 @@
 package com.amoalla.redis;
 
-import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.filter.codec.textline.LineDelimiter;
 import org.apache.mina.filter.codec.textline.TextLineCodecFactory;
 import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.SocketAcceptor;
@@ -13,6 +13,7 @@ import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class Main {
 
@@ -21,7 +22,8 @@ public class Main {
     public static void main(String[] args) throws IOException {
         SocketAcceptor acceptor = new NioSocketAcceptor();
         acceptor.getFilterChain().addLast("logger", new LoggingFilter());
-        acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(new TextLineCodecFactory(StandardCharsets.UTF_8)));
+        var codecFactory = new TextLineCodecFactory(StandardCharsets.UTF_8, LineDelimiter.CRLF, LineDelimiter.AUTO);
+        acceptor.getFilterChain().addLast("codec", new ProtocolCodecFilter(codecFactory));
         acceptor.setHandler(new RedisHandler());
         acceptor.getSessionConfig().setReadBufferSize(2048);
         acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
@@ -32,12 +34,6 @@ public class Main {
 
 class RedisHandler extends IoHandlerAdapter {
 
-    public void sessionOpened(IoSession session) throws Exception {
-        System.out.println("Session opened: " + session.getId());
-        session.closeNow();
-        System.exit(0);
-    }
-
     @Override
     public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
         cause.printStackTrace();
@@ -45,9 +41,9 @@ class RedisHandler extends IoHandlerAdapter {
 
     @Override
     public void messageReceived(IoSession session, Object message) throws Exception {
-        String str = message.toString();
-        System.out.println("Message Received: " + str);
-        session.closeNow();
+        if (message instanceof String str && "ping".equals(str)) {
+            session.write("+PONG");
+        }
     }
 
     @Override
