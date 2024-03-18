@@ -8,11 +8,14 @@ import org.apache.mina.transport.socket.SocketAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 
 // TODO
 // - Handle error type
 public class Main {
 
+    public static final Map<String, Object> CACHE = new HashMap<>();
     private static final int PORT = 6379;
 
     public static void main(String[] args) throws Exception {
