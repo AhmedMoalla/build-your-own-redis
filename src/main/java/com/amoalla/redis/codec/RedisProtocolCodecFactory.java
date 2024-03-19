@@ -8,12 +8,12 @@ import org.apache.mina.filter.codec.ProtocolEncoder;
 public class RedisProtocolCodecFactory implements ProtocolCodecFactory {
 
     @Override
-    public ProtocolEncoder getEncoder(IoSession session) throws Exception {
+    public ProtocolEncoder getEncoder(IoSession session) {
         return new RedisProtocolEncoder();
     }
 
     @Override
-    public ProtocolDecoder getDecoder(IoSession session) throws Exception {
+    public ProtocolDecoder getDecoder(IoSession session) {
         return new RedisProtocolDecoder();
     }
 }

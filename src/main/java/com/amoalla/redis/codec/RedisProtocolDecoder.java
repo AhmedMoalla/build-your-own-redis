@@ -1,5 +1,7 @@
 package com.amoalla.redis.codec;
 
+import com.amoalla.redis.command.RedisCommand;
+import com.amoalla.redis.command.RedisCommandType;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolDecoder;
@@ -10,6 +12,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class RedisProtocolDecoder implements ProtocolDecoder {
 
@@ -21,8 +24,12 @@ public class RedisProtocolDecoder implements ProtocolDecoder {
 //        System.out.println(in.duplicate().getString(utf8Decoder));
 //        System.out.println("=========================");
         Object message = decodeMessage(in);
-        if (message != null) {
-            out.write(message);
+        if (message instanceof Object[] arr) {
+            RedisCommandType type = RedisCommandType.valueOf((String) arr[0]);
+            Object[] args = new Object[arr.length - 1];
+            System.arraycopy(arr, 1, args, 0, args.length);
+            RedisCommand command = type.parse(Arrays.asList(args));
+            out.write(command);
         }
     }
 

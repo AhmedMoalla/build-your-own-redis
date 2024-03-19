@@ -1,21 +1,15 @@
 package com.amoalla.redis;
 
 import com.amoalla.redis.codec.RedisProtocolCodecFactory;
+import com.amoalla.redis.core.RedisHandler;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
-import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.SocketAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
 
-// TODO
-// - Handle error type
 public class Main {
-
-    public static final Map<String, Object> CACHE = new HashMap<>();
     private static final int PORT = 6379;
 
     public static void main(String[] args) throws Exception {
