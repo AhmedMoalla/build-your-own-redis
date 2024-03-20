@@ -9,13 +9,11 @@ import org.apache.mina.transport.socket.SocketAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 
 import java.net.InetSocketAddress;
-import java.time.Duration;
 
 public class Main {
-    private static final int PORT = 6379;
 
     public static void main(String[] args) throws Exception {
-
+        Args parsedArgs = Args.parse(args);
         SocketAcceptor acceptor = new NioSocketAcceptor();
         var filterChain = acceptor.getFilterChain();
 //        filterChain.addLast("logger", new LoggingFilter());
@@ -25,7 +23,21 @@ public class Main {
         acceptor.getSessionConfig().setReadBufferSize(2048);
         acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
         acceptor.setReuseAddress(true);
-        acceptor.bind(new InetSocketAddress(PORT));
+        acceptor.bind(new InetSocketAddress(parsedArgs.port()));
         Runtime.getRuntime().addShutdownHook(new Thread(cache::close));
+    }
+
+    private record Args(int port) {
+        static Args parse(String[] args) {
+            int port = 6379;
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("--port") && i + 1 < args.length) {
+                    port = Integer.parseInt(args[i + 1]);
+                    break;
+                }
+            }
+
+            return new Args(port);
+        }
     }
 }
