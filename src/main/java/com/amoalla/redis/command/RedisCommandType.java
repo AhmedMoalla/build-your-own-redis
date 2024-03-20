@@ -7,7 +7,7 @@ public enum RedisCommandType {
     echo(EchoCommand::parse),
     ping(PingCommand::parse),
     set(SetCommand::parse),
-    get(args -> null);
+    get(GetCommand::parse);
 
     private final Function<List<Object>, RedisCommand> argsParser;
 

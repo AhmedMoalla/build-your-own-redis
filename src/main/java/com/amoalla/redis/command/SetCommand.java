@@ -1,6 +1,9 @@
 package com.amoalla.redis.command;
 
+import com.amoalla.redis.core.RedisCache;
 import com.amoalla.redis.exception.CommandParsingException;
+import lombok.Builder;
+import lombok.RequiredArgsConstructor;
 import org.eclipse.collections.api.set.MutableSet;
 import org.eclipse.collections.impl.factory.Sets;
 
@@ -9,20 +12,30 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
-import static com.amoalla.redis.command.util.IteratorUtils.*;
+import static com.amoalla.redis.command.util.IteratorUtils.nextPositiveInt;
+import static com.amoalla.redis.command.util.IteratorUtils.nextString;
 
-public record SetCommand(String key, String value, SetMode mode, boolean setAndGet, Duration expiration, boolean keepTTL) implements RedisCommand {
+@Builder
+public record SetCommand(String key, String value, SetMode mode, boolean setAndGet, Duration expiration,
+                         boolean keepTTL) implements RedisCommand {
 
     public static final Duration INFINITE = Duration.ofNanos(Long.MAX_VALUE);
     private static final Set<Object> EXPIRATION_ARGS = Set.of("EX", "PX", "EXAT", "PXAT", "KEEPTTL");
 
-    public SetCommand(String key, String value) {
-        this(key, value, SetMode.DEFAULT, false, INFINITE, false);
-    }
+    @RequiredArgsConstructor
+    public enum SetMode implements BiPredicate<RedisCache, String> {
+        DEFAULT((cache, key) -> true),
+        SET_IF_NOT_EXISTS((cache, key) -> !cache.containsKey(key)),
+        SET_IF_EXISTS(RedisCache::containsKey);
+        private final BiPredicate<RedisCache, String> predicate;
 
-    public enum SetMode {
-        DEFAULT, SET_IF_NOT_EXISTS, SET_IF_EXISTS
+        @Override
+        public boolean test(RedisCache cache, String key) {
+            return predicate.test(cache, key);
+        }
     }
 
     public static SetCommand parse(List<Object> args) {
@@ -33,16 +46,16 @@ public record SetCommand(String key, String value, SetMode mode, boolean setAndG
         String value = nextString(iterator);
 
         SetMode mode = SetMode.DEFAULT;
-        boolean getAndSet = false;
+        boolean setAndGet = false;
         Duration expiration = INFINITE;
         boolean keepTTL = false;
 
         while (iterator.hasNext()) {
-            String next = nextString(iterator);
+            String next = nextString(iterator).toUpperCase();
             switch (next) {
                 case "NX" -> mode = SetMode.SET_IF_NOT_EXISTS;
                 case "XX" -> mode = SetMode.SET_IF_EXISTS;
-                case "GET" -> getAndSet = true;
+                case "GET" -> setAndGet = true;
                 case "EX" -> expiration = Duration.ofSeconds(nextPositiveInt(iterator));
                 case "PX" -> expiration = Duration.ofMillis(nextPositiveInt(iterator));
                 case "EXAT" -> {
@@ -54,16 +67,19 @@ public record SetCommand(String key, String value, SetMode mode, boolean setAndG
                     expiration = Duration.between(LocalDateTime.now(), expirationDateTime);
                 }
                 case "KEEPTTL" -> keepTTL = true;
-                default -> throw new CommandParsingException("Unknown argument: " + next);
+                default -> throw new CommandParsingException(STR."Unknown argument: \{next}");
             }
         }
 
-        return new SetCommand(key, value, mode, getAndSet, expiration, keepTTL);
+        return new SetCommand(key, value, mode, setAndGet, expiration, keepTTL);
     }
 
+    private static final int MIN_ARGS = 2;
+    private static final int MAX_ARGS = 6;
+
     private static void validateArgs(List<Object> args) {
-        if (args.size() < 2 || args.size() > 5) {
-            throw new CommandParsingException("Expected between 2 and 5 args. Got " + args.size() + " instead.");
+        if (args.size() < MIN_ARGS || args.size() > MAX_ARGS) {
+            throw new CommandParsingException(STR."Expected between \{MIN_ARGS} and \{MAX_ARGS} args. Got \{args.size()} instead.");
         }
 
         if (args.contains("NX") && args.contains("XX")) {
@@ -72,7 +88,7 @@ public record SetCommand(String key, String value, SetMode mode, boolean setAndG
 
         MutableSet<Object> expirationArgs = Sets.intersect(EXPIRATION_ARGS, new HashSet<>(args));
         if (expirationArgs.size() > 1) {
-            throw new CommandParsingException("Syntax Error: Can't have multiple expiration args at the same time. Found: " + expirationArgs);
+            throw new CommandParsingException(STR."Syntax Error: Can't have multiple expiration args at the same time. Found: \{expirationArgs}");
         }
 
     }
