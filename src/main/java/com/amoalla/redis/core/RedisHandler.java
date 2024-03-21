@@ -4,6 +4,8 @@ import com.amoalla.redis.command.*;
 import com.amoalla.redis.handler.*;
 import com.amoalla.redis.handler.info.InfoHandler;
 import com.amoalla.redis.handler.info.InfoProvider;
+import com.amoalla.redis.replication.ReplicationManager;
+import com.amoalla.redis.types.NullValue;
 import lombok.RequiredArgsConstructor;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
@@ -14,6 +16,7 @@ import java.util.List;
 public class RedisHandler extends IoHandlerAdapter {
 
     private final RedisCache cache;
+    private final ReplicationManager replicationManager;
     private final List<InfoProvider> infoProviders;
 
     @Override
@@ -26,10 +29,10 @@ public class RedisHandler extends IoHandlerAdapter {
                 case GetCommand cmd -> new GetHandler(cache).handle(cmd);
                 case InfoCommand cmd -> new InfoHandler(infoProviders).handle(cmd);
                 case ReplConfCommand cmd -> new ReplConfHandler().handle(cmd);
-                case PSyncCommand cmd -> null;
+                case PSyncCommand cmd -> new PsyncHandler(replicationManager).handle(cmd);
             };
             if (response == null) {
-                response = "_\r\n";
+                response = NullValue.INSTANCE;
             }
             session.write(response);
         }

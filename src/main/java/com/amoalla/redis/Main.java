@@ -26,7 +26,7 @@ public class Main {
         var cache = new EhCacheRedisCache();
         var replicationManager = new ReplicationManager(parsedArgs.port(), parsedArgs.replicationConfig());
         List<InfoProvider> infoProviders = List.of(replicationManager);
-        acceptor.setHandler(new RedisHandler(cache, infoProviders));
+        acceptor.setHandler(new RedisHandler(cache, replicationManager, infoProviders));
         acceptor.getSessionConfig().setReadBufferSize(2048);
         acceptor.getSessionConfig().setIdleTime(IdleStatus.BOTH_IDLE, 10);
         acceptor.setReuseAddress(true);
