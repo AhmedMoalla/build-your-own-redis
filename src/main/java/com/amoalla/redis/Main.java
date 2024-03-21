@@ -37,7 +37,7 @@ public class Main {
         static Args parse(String[] args) {
             System.out.println(STR."Received args: \{String.join(" ", args)}");
             int port = 6379;
-            ReplicationConfig replicationConfig = new ReplicationConfig(null, -1, true);
+            ReplicationConfig replicationConfig = new ReplicationConfig(null, -1, false);
             for (int i = 0; i < args.length; i++) {
                 if (args[i].equals("--port") && i + 1 < args.length) {
                     port = Integer.parseInt(args[i + 1]);
@@ -45,8 +45,7 @@ public class Main {
                 if (args[i].equals("--replicaof") && i + 2 < args.length) {
                     String masterHost = args[i + 1];
                     int masterPort = Integer.parseInt(args[i + 2]);
-                    boolean isMaster = false;
-                    replicationConfig = new ReplicationConfig(masterHost, masterPort, isMaster);
+                    replicationConfig = new ReplicationConfig(masterHost, masterPort, true);
                 }
             }
 

@@ -1,19 +1,55 @@
 package com.amoalla.redis.replication;
 
+import com.amoalla.redis.codec.RedisProtocolCodecFactory;
+import com.amoalla.redis.command.PingCommand;
 import com.amoalla.redis.handler.info.InfoProvider;
 import com.amoalla.redis.handler.info.InfoType;
-import lombok.RequiredArgsConstructor;
+import org.apache.mina.core.future.ConnectFuture;
+import org.apache.mina.core.service.IoConnector;
+import org.apache.mina.core.service.IoHandlerAdapter;
+import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.transport.socket.nio.NioSocketConnector;
 
+import java.net.InetSocketAddress;
 import java.security.SecureRandom;
 
-@RequiredArgsConstructor
-public class ReplicationManager implements InfoProvider {
+public class ReplicationManager extends IoHandlerAdapter implements InfoProvider {
 
     private final String replicationId = generateReplicationId(40);
     private final ReplicationConfig config;
+    private IoSession masterSession;
+
+    public ReplicationManager(ReplicationConfig config) {
+        this.config = config;
+
+        if (config.isSlave()) {
+            connectToMaster(config.masterHost(), config.masterPort());
+        }
+    }
+
+    private void connectToMaster(String masterHost, int masterPort) {
+        IoConnector connector = new NioSocketConnector();
+        connector.setHandler(this);
+        var filterChain = connector.getFilterChain();
+//        filterChain.addLast("logger", new LoggingFilter());
+        filterChain.addLast("codec", new ProtocolCodecFilter(new RedisProtocolCodecFactory()));
+        ConnectFuture future = connector.connect(new InetSocketAddress(masterHost, masterPort));
+        future.awaitUninterruptibly();
+    }
+
+    @Override
+    public void sessionOpened(IoSession session) throws Exception {
+        if (masterSession != null) {
+            throw new IllegalStateException("Already connected to master");
+        }
+        masterSession = session;
+
+        session.write(new PingCommand());
+    }
 
     private String role() {
-        return config.isMaster() ? "master" : "slave";
+        return config.isSlave() ? "slave" : "master";
     }
 
     @Override
