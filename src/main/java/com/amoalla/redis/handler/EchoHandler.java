@@ -4,9 +4,11 @@ import com.amoalla.redis.command.EchoCommand;
 import com.amoalla.redis.types.BulkString;
 import com.amoalla.redis.types.DataType;
 
+import java.util.List;
+
 public class EchoHandler implements RedisCommandHandler<EchoCommand> {
     @Override
-    public DataType handle(EchoCommand command) {
-        return new BulkString(command.input());
+    public List<DataType> handle(EchoCommand command) {
+        return List.of(new BulkString(command.input()));
     }
 }

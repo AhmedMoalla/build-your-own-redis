@@ -19,7 +19,7 @@ public class InfoHandler implements RedisCommandHandler<InfoCommand> {
     }
 
     @Override
-    public DataType handle(InfoCommand command) {
+    public List<DataType> handle(InfoCommand command) {
         StringBuilder sb = new StringBuilder();
 
         for (String section : command.sections()) {
@@ -27,7 +27,7 @@ public class InfoHandler implements RedisCommandHandler<InfoCommand> {
             sb.append(infoProviders.get(type).info()).append("\n");
         }
 
-        return new BulkString(sb.toString());
+        return List.of(new BulkString(sb.toString()));
     }
 
 

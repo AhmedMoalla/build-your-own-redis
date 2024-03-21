@@ -7,13 +7,20 @@ import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolEncoder;
 import org.apache.mina.filter.codec.ProtocolEncoderOutput;
 
+import java.nio.CharBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class RedisProtocolEncoder implements ProtocolEncoder {
 
+    private static final CharsetEncoder encoder = StandardCharsets.ISO_8859_1.newEncoder();
+
     @Override
-    public void encode(IoSession session, Object raw, ProtocolEncoderOutput out) {
+    public void encode(IoSession session, Object raw, ProtocolEncoderOutput out) throws CharacterCodingException {
         if (raw instanceof RedisCommand command) {
             raw = command.toDataType();
         }
@@ -22,15 +29,16 @@ public class RedisProtocolEncoder implements ProtocolEncoder {
         }
 
         String response = encode(message);
-        out.write(IoBuffer.wrap(response.getBytes(StandardCharsets.UTF_8)));
+        out.write(IoBuffer.wrap(encoder.encode(CharBuffer.wrap(response))));
     }
 
     private String encode(DataType message) {
         return switch (message) {
-            case SimpleString string -> STR."+\{string.value()}\r\n";
-            case BulkString string -> STR."$\{string.value().length()}\r\n\{string.value()}\r\n";
+            case SimpleString(var value) -> STR."+\{value}\r\n";
+            case BulkString(var value) -> STR."$\{value.length()}\r\n\{value}\r\n";
             case NullValue _ -> "$-1\r\n";
-            case Array arr -> STR."*\{arr.elements().size()}\r\n" + arr.elements().stream().map(this::encode).collect(Collectors.joining());
+            case Array(var elements) -> STR."*\{elements.size()}\r\n" + elements.stream().map(this::encode).collect(Collectors.joining());
+            case RDBFileSync(var bytes) -> STR."$\{bytes.length}\r\n\{new String(bytes)}";
         };
     }
 

@@ -5,6 +5,7 @@ import com.amoalla.redis.handler.*;
 import com.amoalla.redis.handler.info.InfoHandler;
 import com.amoalla.redis.handler.info.InfoProvider;
 import com.amoalla.redis.replication.ReplicationManager;
+import com.amoalla.redis.types.DataType;
 import com.amoalla.redis.types.NullValue;
 import lombok.RequiredArgsConstructor;
 import org.apache.mina.core.service.IoHandlerAdapter;
@@ -22,7 +23,7 @@ public class RedisHandler extends IoHandlerAdapter {
     @Override
     public void messageReceived(IoSession session, Object message) {
         if (message instanceof RedisCommand command) {
-            Object response = switch (command) {
+            List<DataType> responses = switch (command) {
                 case EchoCommand cmd -> new EchoHandler().handle(cmd);
                 case PingCommand cmd -> new PingHandler().handle(cmd);
                 case SetCommand cmd -> new SetHandler(cache).handle(cmd);
@@ -31,10 +32,12 @@ public class RedisHandler extends IoHandlerAdapter {
                 case ReplConfCommand cmd -> new ReplConfHandler().handle(cmd);
                 case PSyncCommand cmd -> new PsyncHandler(replicationManager).handle(cmd);
             };
-            if (response == null) {
-                response = NullValue.INSTANCE;
+            if (responses == null) {
+                responses = List.of(NullValue.INSTANCE);
             }
-            session.write(response);
+            for (DataType response : responses) {
+                session.write(response);
+            }
         }
     }
 

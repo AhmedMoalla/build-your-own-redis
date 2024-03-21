@@ -8,6 +8,8 @@ import com.amoalla.redis.types.NullValue;
 import com.amoalla.redis.types.SimpleString;
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 // https://redis.io/commands/set/
 @RequiredArgsConstructor
 public class SetHandler implements RedisCommandHandler<SetCommand> {
@@ -15,7 +17,7 @@ public class SetHandler implements RedisCommandHandler<SetCommand> {
     private final RedisCache cache;
 
     @Override
-    public DataType handle(SetCommand command) {
+    public List<DataType> handle(SetCommand command) {
         String key = command.key();
 
         if (command.mode().test(cache, key)) {
@@ -25,12 +27,12 @@ public class SetHandler implements RedisCommandHandler<SetCommand> {
         if (command.setAndGet()) {
             String value = (String) cache.get(key);
             if (value == null) {
-                return NullValue.INSTANCE;
+                return List.of(NullValue.INSTANCE);
             }
-            return new BulkString(value);
+            return List.of(new BulkString(value));
         }
 
-        return SimpleString.OK;
+        return List.of(SimpleString.OK);
     }
 
     public void putInCache(SetCommand command) {

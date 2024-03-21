@@ -2,8 +2,8 @@ package com.amoalla.redis.replication;
 
 import com.amoalla.redis.codec.RedisProtocolCodecFactory;
 import com.amoalla.redis.codec.RedisProtocolEncoder;
-import com.amoalla.redis.command.PingCommand;
 import com.amoalla.redis.command.PSyncCommand;
+import com.amoalla.redis.command.PingCommand;
 import com.amoalla.redis.command.ReplConfCommand;
 import com.amoalla.redis.handler.info.InfoProvider;
 import com.amoalla.redis.handler.info.InfoType;
