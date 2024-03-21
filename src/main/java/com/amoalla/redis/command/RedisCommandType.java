@@ -9,7 +9,8 @@ public enum RedisCommandType {
     SET(SetCommand::parse),
     GET(GetCommand::parse),
     INFO(InfoCommand::parse),
-    REPLCONF(ReplConfCommand::parse);
+    REPLCONF(ReplConfCommand::parse),
+    PSYNC(PSyncCommand::parse);
 
     private final Function<List<Object>, RedisCommand> argsParser;
 

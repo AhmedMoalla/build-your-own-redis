@@ -26,6 +26,7 @@ public class RedisHandler extends IoHandlerAdapter {
                 case GetCommand cmd -> new GetHandler(cache).handle(cmd);
                 case InfoCommand cmd -> new InfoHandler(infoProviders).handle(cmd);
                 case ReplConfCommand cmd -> new ReplConfHandler().handle(cmd);
+                case PSyncCommand cmd -> null;
             };
             if (response == null) {
                 response = "_\r\n";

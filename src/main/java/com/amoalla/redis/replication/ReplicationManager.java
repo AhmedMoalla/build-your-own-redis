@@ -3,6 +3,7 @@ package com.amoalla.redis.replication;
 import com.amoalla.redis.codec.RedisProtocolCodecFactory;
 import com.amoalla.redis.codec.RedisProtocolEncoder;
 import com.amoalla.redis.command.PingCommand;
+import com.amoalla.redis.command.PSyncCommand;
 import com.amoalla.redis.command.ReplConfCommand;
 import com.amoalla.redis.handler.info.InfoProvider;
 import com.amoalla.redis.handler.info.InfoType;
@@ -56,6 +57,7 @@ public class ReplicationManager extends IoHandlerAdapter implements InfoProvider
         session.write(new PingCommand());
         session.write(new ReplConfCommand("listening-port", Integer.toString(port)));
         session.write(new ReplConfCommand("capa", "psync2"));
+        session.write(new PSyncCommand());
     }
 
     @Override
@@ -75,6 +77,10 @@ public class ReplicationManager extends IoHandlerAdapter implements InfoProvider
                 System.out.println("REPLICATION =========================");
             }
         };
+    }
+
+    public String replicationId() {
+        return replicationId;
     }
 
     private String role() {
