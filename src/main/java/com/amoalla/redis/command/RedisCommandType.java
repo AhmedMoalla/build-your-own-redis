@@ -8,7 +8,8 @@ public enum RedisCommandType {
     PING(PingCommand::parse),
     SET(SetCommand::parse),
     GET(GetCommand::parse),
-    INFO(InfoCommand::parse);
+    INFO(InfoCommand::parse),
+    REPLCONF(ReplConfCommand::parse);
 
     private final Function<List<Object>, RedisCommand> argsParser;
 

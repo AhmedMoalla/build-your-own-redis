@@ -20,9 +20,9 @@ public class RedisProtocolDecoder implements ProtocolDecoder {
 
     @Override
     public void decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
-        System.out.println("=========================");
-        System.out.println(in.duplicate().getString(utf8Decoder));
-        System.out.println("=========================");
+//        System.out.println("=========================");
+//        System.out.println(in.duplicate().getString(utf8Decoder));
+//        System.out.println("=========================");
         Object message = decodeMessage(in);
         if (message instanceof Object[] arr) {
             RedisCommandType type = RedisCommandType.valueOf(((String) arr[0]).toUpperCase());

@@ -8,6 +8,7 @@ import com.amoalla.redis.replication.ReplicationConfig;
 import com.amoalla.redis.replication.ReplicationManager;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.SocketAcceptor;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 
@@ -20,10 +21,10 @@ public class Main {
         Args parsedArgs = Args.parse(args);
         SocketAcceptor acceptor = new NioSocketAcceptor();
         var filterChain = acceptor.getFilterChain();
-//        filterChain.addLast("logger", new LoggingFilter());
+        filterChain.addLast("logger", new LoggingFilter());
         filterChain.addLast("codec", new ProtocolCodecFilter(new RedisProtocolCodecFactory()));
         var cache = new EhCacheRedisCache();
-        var replicationManager = new ReplicationManager(parsedArgs.replicationConfig());
+        var replicationManager = new ReplicationManager(parsedArgs.port(), parsedArgs.replicationConfig());
         List<InfoProvider> infoProviders = List.of(replicationManager);
         acceptor.setHandler(new RedisHandler(cache, infoProviders));
         acceptor.getSessionConfig().setReadBufferSize(2048);

@@ -1,26 +1,34 @@
 package com.amoalla.redis.replication;
 
 import com.amoalla.redis.codec.RedisProtocolCodecFactory;
+import com.amoalla.redis.codec.RedisProtocolEncoder;
 import com.amoalla.redis.command.PingCommand;
+import com.amoalla.redis.command.ReplConfCommand;
 import com.amoalla.redis.handler.info.InfoProvider;
 import com.amoalla.redis.handler.info.InfoType;
+import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoConnector;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
-import org.apache.mina.filter.codec.ProtocolCodecFilter;
+import org.apache.mina.filter.codec.*;
+import org.apache.mina.filter.logging.LoggingFilter;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
-public class ReplicationManager extends IoHandlerAdapter implements InfoProvider {
+public class ReplicationManager extends IoHandlerAdapter implements InfoProvider, ProtocolCodecFactory {
 
     private final String replicationId = generateReplicationId(40);
     private final ReplicationConfig config;
+    private final int port;
     private IoSession masterSession;
 
-    public ReplicationManager(ReplicationConfig config) {
+    public ReplicationManager(int port, ReplicationConfig config) {
+        this.port = port;
         this.config = config;
 
         if (config.isSlave()) {
@@ -32,7 +40,7 @@ public class ReplicationManager extends IoHandlerAdapter implements InfoProvider
         IoConnector connector = new NioSocketConnector();
         connector.setHandler(this);
         var filterChain = connector.getFilterChain();
-//        filterChain.addLast("logger", new LoggingFilter());
+        filterChain.addLast("logger", new LoggingFilter());
         filterChain.addLast("codec", new ProtocolCodecFilter(new RedisProtocolCodecFactory()));
         ConnectFuture future = connector.connect(new InetSocketAddress(masterHost, masterPort));
         future.awaitUninterruptibly();
@@ -46,6 +54,27 @@ public class ReplicationManager extends IoHandlerAdapter implements InfoProvider
         masterSession = session;
 
         session.write(new PingCommand());
+        session.write(new ReplConfCommand("listening-port", Integer.toString(port)));
+        session.write(new ReplConfCommand("capa", "psync2"));
+    }
+
+    @Override
+    public ProtocolEncoder getEncoder(IoSession session) {
+        return new RedisProtocolEncoder();
+    }
+
+    @Override
+    public ProtocolDecoder getDecoder(IoSession session) {
+        return new ProtocolDecoderAdapter() {
+            private static final CharsetDecoder utf8Decoder = StandardCharsets.UTF_8.newDecoder();
+
+            @Override
+            public void decode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception {
+                System.out.println("REPLICATION =========================");
+                System.out.println(in.duplicate().getString(utf8Decoder));
+                System.out.println("REPLICATION =========================");
+            }
+        };
     }
 
     private String role() {

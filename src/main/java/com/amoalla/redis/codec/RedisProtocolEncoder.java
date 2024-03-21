@@ -30,7 +30,7 @@ public class RedisProtocolEncoder implements ProtocolEncoder {
             case SimpleString string -> STR."+\{string.value()}\r\n";
             case BulkString string -> STR."$\{string.value().length()}\r\n\{string.value()}\r\n";
             case NullValue _ -> "$-1\r\n";
-            case Array arr -> STR."*\{arr.elements().size()}\r\n" + arr.elements().stream().map(elt -> STR."\{encode(elt)}\r\n").collect(Collectors.joining());
+            case Array arr -> STR."*\{arr.elements().size()}\r\n" + arr.elements().stream().map(this::encode).collect(Collectors.joining());
         };
     }
 

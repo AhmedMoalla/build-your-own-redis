@@ -1,10 +1,7 @@
 package com.amoalla.redis.core;
 
 import com.amoalla.redis.command.*;
-import com.amoalla.redis.handler.EchoHandler;
-import com.amoalla.redis.handler.GetHandler;
-import com.amoalla.redis.handler.PingHandler;
-import com.amoalla.redis.handler.SetHandler;
+import com.amoalla.redis.handler.*;
 import com.amoalla.redis.handler.info.InfoHandler;
 import com.amoalla.redis.handler.info.InfoProvider;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +25,7 @@ public class RedisHandler extends IoHandlerAdapter {
                 case SetCommand cmd -> new SetHandler(cache).handle(cmd);
                 case GetCommand cmd -> new GetHandler(cache).handle(cmd);
                 case InfoCommand cmd -> new InfoHandler(infoProviders).handle(cmd);
+                case ReplConfCommand cmd -> new ReplConfHandler().handle(cmd);
             };
             if (response == null) {
                 response = "_\r\n";
