@@ -5,14 +5,19 @@ import com.amoalla.redis.handler.EchoHandler;
 import com.amoalla.redis.handler.GetHandler;
 import com.amoalla.redis.handler.PingHandler;
 import com.amoalla.redis.handler.SetHandler;
+import com.amoalla.redis.handler.info.InfoHandler;
+import com.amoalla.redis.handler.info.InfoProvider;
 import lombok.RequiredArgsConstructor;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 public class RedisHandler extends IoHandlerAdapter {
 
     private final RedisCache cache;
+    private final List<InfoProvider> infoProviders;
 
     @Override
     public void messageReceived(IoSession session, Object message) {
@@ -22,6 +27,7 @@ public class RedisHandler extends IoHandlerAdapter {
                 case PingCommand cmd -> new PingHandler().handle(cmd);
                 case SetCommand cmd -> new SetHandler(cache).handle(cmd);
                 case GetCommand cmd -> new GetHandler(cache).handle(cmd);
+                case InfoCommand cmd -> new InfoHandler(infoProviders).handle(cmd);
             };
             if (response == null) {
                 response = "_\r\n";

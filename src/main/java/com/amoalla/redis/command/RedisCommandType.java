@@ -4,10 +4,11 @@ import java.util.List;
 import java.util.function.Function;
 
 public enum RedisCommandType {
-    echo(EchoCommand::parse),
-    ping(PingCommand::parse),
-    set(SetCommand::parse),
-    get(GetCommand::parse);
+    ECHO(EchoCommand::parse),
+    PING(PingCommand::parse),
+    SET(SetCommand::parse),
+    GET(GetCommand::parse),
+    INFO(InfoCommand::parse);
 
     private final Function<List<Object>, RedisCommand> argsParser;
 

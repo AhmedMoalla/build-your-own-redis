@@ -25,7 +25,7 @@ public class RedisProtocolDecoder implements ProtocolDecoder {
 //        System.out.println("=========================");
         Object message = decodeMessage(in);
         if (message instanceof Object[] arr) {
-            RedisCommandType type = RedisCommandType.valueOf((String) arr[0]);
+            RedisCommandType type = RedisCommandType.valueOf(((String) arr[0]).toUpperCase());
             Object[] args = new Object[arr.length - 1];
             System.arraycopy(arr, 1, args, 0, args.length);
             RedisCommand command = type.parse(Arrays.asList(args));
