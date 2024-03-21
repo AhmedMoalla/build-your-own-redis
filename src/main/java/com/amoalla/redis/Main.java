@@ -4,6 +4,7 @@ import com.amoalla.redis.codec.RedisProtocolCodecFactory;
 import com.amoalla.redis.core.EhCacheRedisCache;
 import com.amoalla.redis.core.RedisHandler;
 import com.amoalla.redis.handler.info.InfoProvider;
+import com.amoalla.redis.replication.ReplicationConfig;
 import com.amoalla.redis.replication.ReplicationManager;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
@@ -22,7 +23,7 @@ public class Main {
 //        filterChain.addLast("logger", new LoggingFilter());
         filterChain.addLast("codec", new ProtocolCodecFilter(new RedisProtocolCodecFactory()));
         var cache = new EhCacheRedisCache();
-        var replicationManager = new ReplicationManager();
+        var replicationManager = new ReplicationManager(parsedArgs.replicationConfig());
         List<InfoProvider> infoProviders = List.of(replicationManager);
         acceptor.setHandler(new RedisHandler(cache, infoProviders));
         acceptor.getSessionConfig().setReadBufferSize(2048);
@@ -32,17 +33,26 @@ public class Main {
         Runtime.getRuntime().addShutdownHook(new Thread(cache::close));
     }
 
-    private record Args(int port) {
+    private record Args(int port, ReplicationConfig replicationConfig) {
         static Args parse(String[] args) {
+            System.out.println(STR."Received args: \{String.join(" ", args)}");
             int port = 6379;
+            ReplicationConfig replicationConfig = new ReplicationConfig(null, -1, true);
             for (int i = 0; i < args.length; i++) {
                 if (args[i].equals("--port") && i + 1 < args.length) {
                     port = Integer.parseInt(args[i + 1]);
-                    break;
+                }
+                if (args[i].equals("--replicaof") && i + 2 < args.length) {
+                    String masterHost = args[i + 1];
+                    int masterPort = Integer.parseInt(args[i + 2]);
+                    boolean isMaster = false;
+                    replicationConfig = new ReplicationConfig(masterHost, masterPort, isMaster);
                 }
             }
 
-            return new Args(port);
+            var parsedArgs = new Args(port, replicationConfig);
+            System.out.println(STR."Parsed args: \{parsedArgs}");
+            return parsedArgs;
         }
     }
 }
